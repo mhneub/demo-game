@@ -1,0 +1,15 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/rocketController.cs">
+    <Files>
+      <File FileName="Assets/Scripts/rocketController.cs" Line="14" Column="25" />
+      <File FileName="Assets/Scripts/asteroidController.cs" Line="45" Column="3" />
+      <File FileName="Assets/Scripts/bulletController.cs" Line="17" Column="24" />
+      <File FileName="Assets/Scripts/asteroidSpawnerScript.cs" Line="18" Column="121" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
