@@ -15,7 +15,7 @@ public class asteroidSpawnerScript : MonoBehaviour {
 			position.z = z;
 			Vector3 axis = new Vector3(Random.Range(-1F, 1F), Random.Range(-1F, 1F), Random.Range(-1F, 1F)).normalized;
 			float angle = Random.Range (0F, 180F);
-			Rigidbody2D instantiatedAsteroid = Instantiate(asteroid, position, Quaternion.AngleAxis(angle, axis)) as Rigidbody2D;
+			Instantiate(asteroid, position, Quaternion.AngleAxis(angle, axis));
 		}
 	}
 	

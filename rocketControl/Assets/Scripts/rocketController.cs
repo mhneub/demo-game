@@ -2,14 +2,28 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class rocketController : MonoBehaviour {
+public class rocketController : MonoBehaviour
+{
 
 	// public variables
 	public LayerMask ignore;
-	public GameObject YouLoseText;
+	//public GameObject YouLoseText;
 	public GameObject YouWinText;
 	public Rigidbody2D bullet;
+	public Sprite spriteNoFlame;
+	public Sprite spriteWithFlame;
+	public ParticleSystem explodeParticles;
+	public AudioClip shootSound;
+	public float shootSoundScale;
+	public AudioClip explodeSound;
+	public float explodeSoundScale;
+	public AudioClip thrustSound;
+	public float thrustSoundScale;
+	public AudioClip swishSound;
+	public float swishSoundScale;
 
+	AudioSource audioSource;
+	AudioSource audioSource_thrust;
 
 	// constant variables
 	const float Pi = 3.14159f;
@@ -17,239 +31,247 @@ public class rocketController : MonoBehaviour {
 	// physics parameters
 	float allowedSpeed = 0.5f;
 	float allowedAngle = 5f;
-	float rocketSizeScale = 0.5f;
 	float thrusterSpeed = 1f;
-	float rotationScale = -4f;
-	float bulletSpeed = 5;
-	float lowPassFilterFactor = 0.5f;
-	float minSwipeDist = 50;
-	float swipeDistVertical;
-	int bulletTimeInterval = 10;
-	int swipeCount = 0;
+	float gunSpeed = 60f;	// per second!
+	float rotationScale = -8f;
+	float bulletSpeed = 10f;
+	float lowPassFilterFactor = 0.2f;
+	float bulletTimeInterval = 0.1f;	// minimum time between bullets in seconds
+	float timeSinceLastBullet = 0.0f;
+	float swipeTimeInterval = 0.2f;
+	float timeSinceLastSwipe = 1000f;
+
 	int flipped = 0;
-	bool touchThruster = false;
-	bool touchGun = false;
 	Vector3 originPosition;
 	Vector3 originAngles;
-	Vector2 vel;
-	Dictionary<int,Vector2> initialTouchPos;
-	Dictionary<int, float> swipeDist;
+	SpriteRenderer spriteRenderer;
+
+	bool isThrusting;
+	bool isShooting;
+	bool rocketDead;
+
+	ParticleSystem thrustParticleSystem;
+	ParticleSystem thrustBurstParticleSystem;
+
+	int lastLevel = 3;
 
 
-
-	//old physics parameters
-	/*float gravity = -0.5f;
-	Vector3 acc;
-	Vector3 velocity;
-	Vector3 jerk;
-	Vector3 G;
-	float gunRecoil = -10000f;
-	float friction = 0.5f;
-	float rotationSpeed = -5f;
-	int rotationScale = 5;*/
-
-	void Init() {
-		YouLoseText.gameObject.renderer.enabled = false;
+	void Init()
+	{
 		YouWinText.gameObject.renderer.enabled = false;
-		transform.position = originPosition;
+		//transform.position = originPosition;
 		transform.eulerAngles = originAngles;
 		rigidbody2D.velocity = Vector3.zero;
 		rigidbody2D.angularVelocity = 0f;
-
 	}
 
 	// Use this for initialization
-	void Start () {
-		Screen.orientation = ScreenOrientation.LandscapeLeft;
-		vel = new Vector3(0f, 0f, 0f);
-		originPosition = new Vector3 (0f, 0f, 0f);
-		originAngles = new Vector3 (0f, 0f, 0f);
-		transform.localScale = new Vector3 (rocketSizeScale, rocketSizeScale, rocketSizeScale);
-		initialTouchPos = new Dictionary<int, Vector2> ();
-		swipeDist = new Dictionary<int, float> ();
-		Init ();
+	void Start()
+	{
+		Screen.orientation = ScreenOrientation.LandscapeRight;
+		//vel = new Vector3(0f, 0f, 0f);
+		//originPosition = new Vector3(0f, 0f, 0f);
+		originAngles = new Vector3(0f, 0f, 0f);
+		//transform.localScale = new Vector3(rocketSizeScale, rocketSizeScale, rocketSizeScale);
+		Init();
+
+		spriteRenderer = GetComponent<SpriteRenderer>();
+		spriteRenderer.sprite = spriteNoFlame;
+		//thrustedLastFrame = false;
+		//thrustedThisFrame = false;
+		isThrusting = false;
+
+		ParticleSystem[] ps = GetComponentsInChildren<ParticleSystem> ();
+		thrustParticleSystem = ps [0];
+		thrustBurstParticleSystem = ps [1];
+		thrustParticleSystem.Stop ();
+		thrustBurstParticleSystem.Stop ();
+		rocketDead = false;
+
+		audioSource = GameObject.Find("audioSource").GetComponent<AudioSource> ();
+		audioSource_thrust = GameObject.Find("audioSource_thrust").GetComponent<AudioSource> ();
 	}
 
-	void thrust(){
-		RaycastHit2D hit = Physics2D.Raycast(transform.position, -transform.up);
-		if (hit.collider != null) {
-			GameObject recipient = hit.transform.gameObject;
-			if (recipient.tag == "enemy") {
-				float dist = (recipient.transform.position - transform.position).magnitude;
-				recipient.rigidbody2D.AddForce(-transform.up * 10/(dist)); //add distance parameter maybe
-			}
-		}
-	}
-
-	void shoot(){
-		if ((int)(Time.time * 100) % bulletTimeInterval == 0) {
-			Rigidbody2D instantiatedBullet = Instantiate (bullet, transform.position, transform.rotation) as Rigidbody2D;
+	void shoot()
+	{
+		// don't shoot if rocket died
+		if (timeSinceLastBullet >= bulletTimeInterval && !rocketDead) {
+			Rigidbody2D instantiatedBullet = Instantiate(bullet, transform.position + 0.5f*transform.up, transform.rotation) as Rigidbody2D;
 			instantiatedBullet.velocity = transform.up * bulletSpeed;	
 			Physics2D.IgnoreCollision(instantiatedBullet.collider2D, rigidbody2D.collider2D);
+
+			rigidbody2D.AddForce(-gunSpeed * bulletTimeInterval * transform.up);
+
+			audioSource.PlayOneShot(shootSound, shootSoundScale);
+
+			timeSinceLastBullet = 0.0f;
 		}
 	}
 
-	/*string pushButton(Vector3 touchPosition) {
-		RaycastHit2D hit = Physics2D.Raycast(touchPosition, Vector2.zero);
-		if(hit.collider != null){
-			GameObject recipient = hit.transform.gameObject;
-			if (recipient.name == "Thruster" || recipient.name == "Gun"){
-			}
-		}
-	}*/
-
-	void translateRocket(Vector3 touchPosition){
-		RaycastHit2D hit = Physics2D.Raycast(touchPosition, Vector2.zero);
-		if(hit.collider != null){
-			GameObject recipient = hit.transform.gameObject;
-			if (recipient.name == "Thruster"){
-				rigidbody2D.AddForce(thrusterSpeed * transform.up);
-				thrust();
-				//acc += thrusterSpeed*transform.up;
-			}
-			else if(recipient.name == "Gun") {
-				//acc -= thrusterSpeed*transform.up;
-				rigidbody2D.AddForce(-transform.up);
-				shoot();
-			}
-		}
-
+	void thrust()
+	{
+		rigidbody2D.AddForce (thrusterSpeed * transform.up);
 	}
 
-	void rotateRocket(float axis){
-		//int rotateStep = (int)(axis * 180/Pi) / rotationScale;
-		//transform.Rotate(0, 0, rotateStep * rotationScale * rotationSpeed * Pi / 180);
-		Quaternion intermediateQuat = Quaternion.Euler (transform.eulerAngles);
-		Quaternion targetQuat = Quaternion.Euler (transform.eulerAngles.x, transform.eulerAngles.y, rotationScale * axis * 180/Pi + flipped);
+	void rotateRocket(float axis)
+	{
+		Quaternion intermediateQuat = Quaternion.Euler(transform.eulerAngles);
+		Quaternion targetQuat;
+		targetQuat = Quaternion.Euler(transform.eulerAngles.x, transform.eulerAngles.y, rotationScale * axis * 180 / Pi + flipped);
 		transform.rotation = Quaternion.Lerp(intermediateQuat, targetQuat, lowPassFilterFactor);
 	}
 
-	/*void updateKinematics(){
-		velocity = acc * Time.fixedDeltaTime + G * Time.fixedTime;
-		acc -= friction * velocity;
-		transform.position += velocity * Time.fixedDeltaTime;
-	}*/
-
-	IEnumerator delay(bool win){
-		if (win) {
-			YouWinText.gameObject.renderer.enabled = true;
-		}
-		else{
-			YouLoseText.gameObject.renderer.enabled = true;
-		}
+	IEnumerator delayWin()
+	{
+		YouWinText.gameObject.renderer.enabled = true;
 		yield return new WaitForSeconds(1);
+		if (Application.loadedLevel == lastLevel) {
+			Application.LoadLevel(0);
+		} else {
+			Application.LoadLevel(Application.loadedLevel + 1);
+		}
+	}
+
+	IEnumerator delayLose()
+	{
+		yield return new WaitForSeconds(2);
 		Application.LoadLevel(Application.loadedLevel);
 	}
 
-	void rocketDeath(){
-		Debug.Log ("lose");
-		StartCoroutine(delay (false));
-	}
+	void rocketDeath()
+	{
+		if (!rocketDead) {
+			rocketDead = true;
 
-	void win(){
-		Debug.Log ("win");
-		StartCoroutine(delay (true));
-	}
+			// actions on death
+			gameObject.collider2D.enabled = false;
+			gameObject.renderer.enabled = false;
+			gameObject.GetComponentInChildren<CapsuleCollider> ().enabled = false;
+			thrustParticleSystem.Stop ();
 
-	void OnCollisionEnter2D(Collision2D col) {
-		if (col.gameObject.tag == "enemy") {
-			rocketDeath ();
+			Instantiate(explodeParticles, transform.position, transform.rotation);
+
+			audioSource.PlayOneShot(explodeSound, explodeSoundScale);
+			audioSource_thrust.Stop();
+
+
+			StartCoroutine (delayLose ());
+			//Application.LoadLevel(Application.loadedLevel);
 		}
+	}
+
+	void win()
+	{
+		rocketDead = true;	// disables thrust, gun, etc.
+		StartCoroutine(delayWin());
+	}
+
+	void OnCollisionEnter2D(Collision2D col)
+	{
+		Debug.Log ("rocket collided with " + col.gameObject.name);
 		if (col.gameObject.name == "platform") {
-			//Debug.Log ("win " + vel.magnitude + " " + Mathf.Abs(transform.eulerAngles.z) );
-			if (vel.magnitude < allowedSpeed 
-			    && (Mathf.Abs(transform.eulerAngles.z) < allowedAngle || Mathf.Abs(transform.eulerAngles.z) > (360 - allowedAngle))) {
+			if (rigidbody2D.velocity.magnitude < allowedSpeed 
+				&& (Mathf.Abs(transform.eulerAngles.z) < allowedAngle || Mathf.Abs(transform.eulerAngles.z) > (360 - allowedAngle))) {
 				win();
+			} else {
+				rocketDeath();
 			}
-			else{
-				rocketDeath ();
-			}
+		}
+		else if (col.gameObject.tag == "enemy" || col.gameObject.tag == "terrain") {
+			rocketDeath();
 		}
 	}
 
-	bool detectSwipe(Touch touch) {
-		swipeDist[touch.fingerId] = 0;
-		if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Moved) {
-			RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(touch.position), Vector2.zero);
-			if(hit.collider != null){
-				GameObject recipient = hit.transform.gameObject;
-				if (recipient.name == "Thruster"){
-					initialTouchPos[touch.fingerId] = touch.position;
-					touchThruster = true;
-				}
-				else if(recipient.name == "Gun") {
-					initialTouchPos[touch.fingerId] = touch.position;
-					touchGun = true;
-				}
-			}
-		}
-		else if (touch.phase == TouchPhase.Ended){
-			swipeDist[touch.fingerId] = (new Vector2(0, touch.position.y) - new Vector2(0, initialTouchPos[touch.fingerId].y)).magnitude;
-		}
-		return swipeDist[touch.fingerId] > minSwipeDist;
-	}
-
-	bool detectTwoFingerSwipe() {
-		foreach (Touch touch in Input.touches) {
-			bool swipe = detectSwipe(touch);
-			if (touchGun && touchThruster && swipe){
-				touchGun = false;
-				touchThruster = false;
-				return true;
-			}
-		}
-		return false;
-	}
-
-	void rotate180() {
+	void rotate180()
+	{
 		if (flipped == 180)
 			flipped = 0;
 		else if (flipped == 0)
 			flipped = 180;
+
+		audioSource.PlayOneShot (swishSound, swishSoundScale);
 	}
 
-	void FixedUpdate () {
+	void OnThrustStart() {
+		isThrusting = true;
+		if (!rocketDead) {
+			spriteRenderer.sprite = spriteWithFlame;
+			thrustBurstParticleSystem.Emit(12);
+			thrustParticleSystem.Play();
+			audioSource_thrust.PlayOneShot (thrustSound, thrustSoundScale);
+		}
+	}
 
-/*#if UNITY_EDITOR
-		if(Input.GetMouseButton(0) || Input.GetMouseButtonDown(0) || Input.GetMouseButtonUp(0)) {
-			RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-			if(hit.collider != null){
-				GameObject recipient = hit.transform.gameObject;;
-				if (recipient.name == "Thruster"){
-					acc += thrusterSpeed*transform.up;
-				}
-				else if(recipient.name == "Gun") {
-					if (Input.GetMouseButtonDown(0)) {
-						acc -= thrusterSpeed*transform.up;
-					}
-				}
+	void OnThrustStop() {
+		isThrusting = false;
+		spriteRenderer.sprite = spriteNoFlame;
+		thrustParticleSystem.Stop();
+		audioSource_thrust.Stop();
+	}
+
+	void OnGunStart() {
+		isShooting = true;
+	}
+
+	void OnGunStop() {
+		isShooting = false;
+	}
+
+	void OnDoubleSwipe() {
+		rotate180();
+	}
+
+	void ButtonDown(string buttonTag) {
+		//Debug.Log (buttonTag + " down");
+
+		if (buttonTag == "thruster") {
+			OnThrustStart ();
+		} else if (buttonTag == "gun") {
+			OnGunStart ();
+		}
+	}
+	void ButtonUp(string buttonTag) {	// means button was released and not swiped
+		//Debug.Log (buttonTag + " up");
+
+		if (buttonTag == "thruster") {
+			OnThrustStop ();
+		} else if (buttonTag == "gun") {
+			OnGunStop ();
+		}
+	}
+
+	void ButtonSwiped(string buttonTag) {
+		//Debug.Log (buttonTag + " swiped");
+
+		// see if double-swipe happened
+		if (buttonTag == "thruster") {
+			OnThrustStop();
+			if (timeSinceLastSwipe >= swipeTimeInterval) {
+				OnDoubleSwipe();
+			}
+		} else if (buttonTag == "gun") {
+			OnGunStop ();
+			if (timeSinceLastSwipe >= swipeTimeInterval) {
+				OnDoubleSwipe();
 			}
 		}
+		timeSinceLastSwipe = 0f;
+	}
 
-#endif*/
-		if(Input.touchCount > 0){
-			bool swiped = false;
-			if (Input.touchCount == 2)
-				swiped = detectTwoFingerSwipe();
-			if(swiped){
-				rotate180();
-			}
-			else{
-				foreach (Touch touch in Input.touches) {
-					translateRocket(Camera.main.ScreenToWorldPoint(touch.position));
-				}
-			}
 
+	void FixedUpdate()
+	{
+		// update timeSince counters
+		timeSinceLastBullet += Time.deltaTime;
+		timeSinceLastSwipe += Time.deltaTime;
+
+		if (isShooting) {
+			shoot ();
+		} 
+		if (isThrusting) {
+			thrust();
 		}
-		vel = rigidbody2D.velocity;
+
 		rotateRocket (Input.acceleration.x);
-		//updateKinematics();
-
-		if (Camera.main.WorldToScreenPoint (transform.position).x < 0
-						|| Camera.main.WorldToScreenPoint (transform.position).x > Screen.width
-		    			|| Camera.main.WorldToScreenPoint (transform.position).y < 0
-		    			|| Camera.main.WorldToScreenPoint (transform.position).y > Screen.height ) {
-			rocketDeath();
-		}
 	}
 }
