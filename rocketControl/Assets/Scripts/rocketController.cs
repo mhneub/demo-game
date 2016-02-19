@@ -7,7 +7,6 @@ public class rocketController : MonoBehaviour
 
 	// public variables
 	public LayerMask ignore;
-	//public GameObject YouLoseText;
 	public GameObject YouWinText;
 	public Rigidbody2D bullet;
 	public Sprite spriteNoFlame;
@@ -58,27 +57,22 @@ public class rocketController : MonoBehaviour
 
 	void Init()
 	{
-		YouWinText.gameObject.renderer.enabled = false;
+		YouWinText.gameObject.GetComponent<Renderer>().enabled = false;
 		//transform.position = originPosition;
 		transform.eulerAngles = originAngles;
-		rigidbody2D.velocity = Vector3.zero;
-		rigidbody2D.angularVelocity = 0f;
+		GetComponent<Rigidbody2D>().velocity = Vector3.zero;
+		GetComponent<Rigidbody2D>().angularVelocity = 0f;
 	}
 
 	// Use this for initialization
 	void Start()
 	{
 		Screen.orientation = ScreenOrientation.LandscapeRight;
-		//vel = new Vector3(0f, 0f, 0f);
-		//originPosition = new Vector3(0f, 0f, 0f);
 		originAngles = new Vector3(0f, 0f, 0f);
-		//transform.localScale = new Vector3(rocketSizeScale, rocketSizeScale, rocketSizeScale);
 		Init();
 
 		spriteRenderer = GetComponent<SpriteRenderer>();
 		spriteRenderer.sprite = spriteNoFlame;
-		//thrustedLastFrame = false;
-		//thrustedThisFrame = false;
 		isThrusting = false;
 
 		ParticleSystem[] ps = GetComponentsInChildren<ParticleSystem> ();
@@ -98,9 +92,9 @@ public class rocketController : MonoBehaviour
 		if (timeSinceLastBullet >= bulletTimeInterval && !rocketDead) {
 			Rigidbody2D instantiatedBullet = Instantiate(bullet, transform.position + 0.5f*transform.up, transform.rotation) as Rigidbody2D;
 			instantiatedBullet.velocity = transform.up * bulletSpeed;	
-			Physics2D.IgnoreCollision(instantiatedBullet.collider2D, rigidbody2D.collider2D);
+			Physics2D.IgnoreCollision(instantiatedBullet.GetComponent<Collider2D>(), GetComponent<Rigidbody2D>().GetComponent<Collider2D>());
 
-			rigidbody2D.AddForce(-gunSpeed * bulletTimeInterval * transform.up);
+			GetComponent<Rigidbody2D>().AddForce(-gunSpeed * bulletTimeInterval * transform.up);
 
 			audioSource.PlayOneShot(shootSound, shootSoundScale);
 
@@ -110,7 +104,7 @@ public class rocketController : MonoBehaviour
 
 	void thrust()
 	{
-		rigidbody2D.AddForce (thrusterSpeed * transform.up);
+		GetComponent<Rigidbody2D>().AddForce (thrusterSpeed * transform.up);
 	}
 
 	void rotateRocket(float axis)
@@ -123,7 +117,7 @@ public class rocketController : MonoBehaviour
 
 	IEnumerator delayWin()
 	{
-		YouWinText.gameObject.renderer.enabled = true;
+		YouWinText.gameObject.GetComponent<Renderer>().enabled = true;
 		yield return new WaitForSeconds(1);
 		if (Application.loadedLevel == lastLevel) {
 			Application.LoadLevel(0);
@@ -144,8 +138,8 @@ public class rocketController : MonoBehaviour
 			rocketDead = true;
 
 			// actions on death
-			gameObject.collider2D.enabled = false;
-			gameObject.renderer.enabled = false;
+			gameObject.GetComponent<Collider2D>().enabled = false;
+			gameObject.GetComponent<Renderer>().enabled = false;
 			gameObject.GetComponentInChildren<CapsuleCollider> ().enabled = false;
 			thrustParticleSystem.Stop ();
 
@@ -154,9 +148,7 @@ public class rocketController : MonoBehaviour
 			audioSource.PlayOneShot(explodeSound, explodeSoundScale);
 			audioSource_thrust.Stop();
 
-
-			StartCoroutine (delayLose ());
-			//Application.LoadLevel(Application.loadedLevel);
+			StartCoroutine (delayLose());
 		}
 	}
 
@@ -170,7 +162,7 @@ public class rocketController : MonoBehaviour
 	{
 		Debug.Log ("rocket collided with " + col.gameObject.name);
 		if (col.gameObject.name == "platform") {
-			if (rigidbody2D.velocity.magnitude < allowedSpeed 
+			if (GetComponent<Rigidbody2D>().velocity.magnitude < allowedSpeed 
 				&& (Mathf.Abs(transform.eulerAngles.z) < allowedAngle || Mathf.Abs(transform.eulerAngles.z) > (360 - allowedAngle))) {
 				win();
 			} else {
@@ -192,7 +184,8 @@ public class rocketController : MonoBehaviour
 		audioSource.PlayOneShot (swishSound, swishSoundScale);
 	}
 
-	void OnThrustStart() {
+	void OnThrustStart() 
+	{
 		isThrusting = true;
 		if (!rocketDead) {
 			spriteRenderer.sprite = spriteWithFlame;
@@ -202,37 +195,40 @@ public class rocketController : MonoBehaviour
 		}
 	}
 
-	void OnThrustStop() {
+	void OnThrustStop() 
+	{
 		isThrusting = false;
 		spriteRenderer.sprite = spriteNoFlame;
 		thrustParticleSystem.Stop();
 		audioSource_thrust.Stop();
 	}
 
-	void OnGunStart() {
+	void OnGunStart() 
+	{
 		isShooting = true;
 	}
 
-	void OnGunStop() {
+	void OnGunStop() 
+	{
 		isShooting = false;
 	}
 
-	void OnDoubleSwipe() {
+	void OnDoubleSwipe() 
+	{
 		rotate180();
 	}
 
-	void ButtonDown(string buttonTag) {
-		//Debug.Log (buttonTag + " down");
-
+	void ButtonDown(string buttonTag) 
+	{
 		if (buttonTag == "thruster") {
 			OnThrustStart ();
 		} else if (buttonTag == "gun") {
 			OnGunStart ();
 		}
 	}
-	void ButtonUp(string buttonTag) {	// means button was released and not swiped
-		//Debug.Log (buttonTag + " up");
 
+	void ButtonUp(string buttonTag) 
+	{	// means button was released and not swiped
 		if (buttonTag == "thruster") {
 			OnThrustStop ();
 		} else if (buttonTag == "gun") {
@@ -240,9 +236,8 @@ public class rocketController : MonoBehaviour
 		}
 	}
 
-	void ButtonSwiped(string buttonTag) {
-		//Debug.Log (buttonTag + " swiped");
-
+	void ButtonSwiped(string buttonTag) 
+	{
 		// see if double-swipe happened
 		if (buttonTag == "thruster") {
 			OnThrustStop();
@@ -257,8 +252,7 @@ public class rocketController : MonoBehaviour
 		}
 		timeSinceLastSwipe = 0f;
 	}
-
-
+		
 	void FixedUpdate()
 	{
 		// update timeSince counters

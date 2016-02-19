@@ -7,9 +7,4 @@ public class bulletExplodeParticlesController : MonoBehaviour {
 	void Start () {
 		Destroy (gameObject, 1f);
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 }

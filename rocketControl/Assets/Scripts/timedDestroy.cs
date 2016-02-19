@@ -9,9 +9,4 @@ public class timedDestroy : MonoBehaviour {
 	void Start () {
 		Destroy (gameObject, seconds);
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 }

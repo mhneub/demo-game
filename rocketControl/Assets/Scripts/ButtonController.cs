@@ -32,7 +32,6 @@ public class ButtonController : MonoBehaviour {
 		spriteRenderer.color = new Color (1f, 1f, 1f, nonpressAlpha * currentMultiplier);
 
 		rocket = GameObject.Find ("rocket");
-		//buttonPosX = new Vector2 (Camera.main.WorldToScreenPoint (gameObject.transform.position).x, 0);
 
 		buttonTouchLastFrame = new Touch ();
 		buttonTouchedLastFrame = false;
@@ -40,7 +39,6 @@ public class ButtonController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-
 		elapsedTime += Time.deltaTime;
 
 		// fade nonpressAlpha until it goes down to idleAlpha
@@ -49,7 +47,7 @@ public class ButtonController : MonoBehaviour {
 			spriteRenderer.color = new Color (1f, 1f, 1f, nonpressAlpha * currentMultiplier);
 		}
 
-		// see if the button was touched this frame.  If so, get that touch
+		// see if the button was touched this frame and if so get that touch
 		Touch buttonTouch = new Touch();
 		bool buttonTouched = false;			// used as null flag
 		foreach(Touch touch in Input.touches){

@@ -16,14 +16,13 @@ public class boundariesGenerator : MonoBehaviour {
 
 		// get world location of bottom-left of background
 		GameObject bg = GameObject.Find ("background");
-		Vector3 bg_center = bg.renderer.bounds.center;
-		Vector3 bg_extents = bg.renderer.bounds.extents;
+		Vector3 bg_center = bg.GetComponent<Renderer>().bounds.center;
+		Vector3 bg_extents = bg.GetComponent<Renderer>().bounds.extents;
 		float bg_xmin = bg_center.x - bg_extents.x;
 		float bg_ymin = bg_center.y - bg_extents.y;
 		// get world size of background
-		float bg_width = bg.renderer.bounds.size.x;
-		float bg_height = bg.renderer.bounds.size.y;
-
+		float bg_width = bg.GetComponent<Renderer>().bounds.size.x;
+		float bg_height = bg.GetComponent<Renderer>().bounds.size.y;
 
 		// read in points from file, convert to world coordinates
 		int numpoints, platformIndex;
@@ -33,14 +32,12 @@ public class boundariesGenerator : MonoBehaviour {
 		string[] lines = pointsFile.text.Split ("\n" [0]);
 		numpoints = int.Parse (lines[0]);
 		platformIndex = int.Parse (lines[1]);
-		//Debug.Log ("n=" + numpoints + "  k=" + platformIndex);
 
 		points = new Vector2[numpoints];
 		for (int i = 0; i < numpoints; i++) {
 			string[] words = lines[2+i].Split(" "[0]);
 			float x = float.Parse (words[0]);
 			float y = float.Parse (words[1]);
-			//Debug.Log (x+" "+y);
 
 			int index = invertWindingOrder ? numpoints - 1 - i : i;
 			points[index] = new Vector2();
@@ -50,9 +47,7 @@ public class boundariesGenerator : MonoBehaviour {
 		if (invertWindingOrder)
 			platformIndex = numpoints - 2 - platformIndex;
 
-
 		// construct mesh for mesh collider
-
 		Vector3[] vertices = new Vector3[2*numpoints + 8];
 		int[] triangles = new int[6*(numpoints-1) + 24];
 
@@ -114,7 +109,6 @@ public class boundariesGenerator : MonoBehaviour {
 		triangles [toffset + 22] = voffset + 4;
 		triangles [toffset + 23] = voffset + 0;
 
-
 		Mesh mesh = new Mesh ();
 		mesh.vertices = vertices;
 		mesh.triangles = triangles;
@@ -125,10 +119,7 @@ public class boundariesGenerator : MonoBehaviour {
 
 		GetComponent<MeshCollider> ().sharedMesh = mesh;
 
-
-
 		// add 4 box colliders along the edges of the screen
-
 		const float thickness = 1;
 
 		// left
@@ -137,8 +128,8 @@ public class boundariesGenerator : MonoBehaviour {
 		            									camCenterY, 0f),
 		                                     new Quaternion()) as GameObject;
 
-		float bi_instance_width = bi_instance.collider2D.bounds.size.x;
-		float bi_instance_height = bi_instance.collider2D.bounds.size.y;
+		float bi_instance_width = bi_instance.GetComponent<Collider2D>().bounds.size.x;
+		float bi_instance_height = bi_instance.GetComponent<Collider2D>().bounds.size.y;
 		bi_instance.transform.localScale = new Vector3 (thickness / bi_instance_width,
 		                                               2f * camVolumeHalfHeight / bi_instance_height,
 		                                               1f);
@@ -169,16 +160,13 @@ public class boundariesGenerator : MonoBehaviour {
 		                                                thickness / bi_instance_height,
 		                                                1f);
 
-
 		// instantiate boundaries and platform along the points
-
 		GameObject b_instance = Instantiate(boundary, new Vector3(), new Quaternion()) as GameObject;
-		float b_instance_width = b_instance.renderer.bounds.size.x;
-		float b_instance_height = b_instance.renderer.bounds.size.y;
+		float b_instance_width = b_instance.GetComponent<Renderer>().bounds.size.x;
+		float b_instance_height = b_instance.GetComponent<Renderer>().bounds.size.y;
 		GameObject.Destroy (b_instance);
 
 		for (int i = 0; i < numpoints - 1; i++) {
-
 			Vector3 center = new Vector3((points[i].x + points[i+1].x) / 2,
 			                             (points[i].y + points[i+1].y) / 2,
 			                             0f);
@@ -187,7 +175,6 @@ public class boundariesGenerator : MonoBehaviour {
 			                          points[i+1].x - points[i].x)
 				*180 / Mathf.PI;
 
-
 			GameObject instance;
 			float instance_width, instance_height;
 
@@ -195,8 +182,8 @@ public class boundariesGenerator : MonoBehaviour {
 				instance = Instantiate(platform, center, new Quaternion()) as GameObject;
 				instance.name = "platform";	// necessary for win condition in rocketController.cs
 
-				instance_width = instance.renderer.bounds.size.x;
-				instance_height = instance.renderer.bounds.size.y;
+				instance_width = instance.GetComponent<Renderer>().bounds.size.x;
+				instance_height = instance.GetComponent<Renderer>().bounds.size.y;
 
 				Vector3 p = instance.transform.position;
 				instance.transform.position = new Vector3(p.x, p.y - (instance_height-b_instance_height)/2, p.z);
@@ -211,11 +198,5 @@ public class boundariesGenerator : MonoBehaviour {
 			instance.transform.localScale = new Vector3(length / instance_width, s.y, s.z);
 			instance.transform.Rotate(new Vector3(0f,0f,angle));
 		}
-
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
 	}
 }
