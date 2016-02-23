@@ -52,7 +52,7 @@ public class rocketController : MonoBehaviour
 	ParticleSystem thrustParticleSystem;
 	ParticleSystem thrustBurstParticleSystem;
 
-	int lastLevel = 3;
+	int lastLevel = 4;
 
 
 	void Init()
