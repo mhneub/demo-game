@@ -117,6 +117,7 @@ public class rocketController : MonoBehaviour
 
 	IEnumerator delayWin()
 	{
+		
 		YouWinText.gameObject.GetComponent<Renderer>().enabled = true;
 		yield return new WaitForSeconds(1);
 		if (Application.loadedLevel == lastLevel) {
