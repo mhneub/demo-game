@@ -62,6 +62,7 @@
      <None Include="Assets\fonts\VT323\OFL.txt" />
      <None Include="Assets\Resources\points_level3.txt" />
      <None Include="Assets\Resources\points_level1.txt" />
+     <None Include="Assets\Resources\points_level_warmup.txt" />
  <Reference Include="UnityEngine.UI">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>
