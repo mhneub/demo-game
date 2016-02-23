@@ -24,6 +24,7 @@ public class boundariesGenerator : MonoBehaviour {
 		float bg_width = bg.GetComponent<Renderer>().bounds.size.x;
 		float bg_height = bg.GetComponent<Renderer>().bounds.size.y;
 
+
 		// read in points from file, convert to world coordinates
 		int numpoints, platformIndex;
 		Vector2[] points;
@@ -32,12 +33,14 @@ public class boundariesGenerator : MonoBehaviour {
 		string[] lines = pointsFile.text.Split ("\n" [0]);
 		numpoints = int.Parse (lines[0]);
 		platformIndex = int.Parse (lines[1]);
+		//Debug.Log ("n=" + numpoints + "  k=" + platformIndex);
 
 		points = new Vector2[numpoints];
 		for (int i = 0; i < numpoints; i++) {
 			string[] words = lines[2+i].Split(" "[0]);
 			float x = float.Parse (words[0]);
 			float y = float.Parse (words[1]);
+			//Debug.Log (x+" "+y);
 
 			int index = invertWindingOrder ? numpoints - 1 - i : i;
 			points[index] = new Vector2();
@@ -47,7 +50,9 @@ public class boundariesGenerator : MonoBehaviour {
 		if (invertWindingOrder)
 			platformIndex = numpoints - 2 - platformIndex;
 
+
 		// construct mesh for mesh collider
+
 		Vector3[] vertices = new Vector3[2*numpoints + 8];
 		int[] triangles = new int[6*(numpoints-1) + 24];
 
@@ -109,6 +114,7 @@ public class boundariesGenerator : MonoBehaviour {
 		triangles [toffset + 22] = voffset + 4;
 		triangles [toffset + 23] = voffset + 0;
 
+
 		Mesh mesh = new Mesh ();
 		mesh.vertices = vertices;
 		mesh.triangles = triangles;
@@ -119,61 +125,68 @@ public class boundariesGenerator : MonoBehaviour {
 
 		GetComponent<MeshCollider> ().sharedMesh = mesh;
 
+
+
 		// add 4 box colliders along the edges of the screen
+
 		const float thickness = 1;
 
 		// left
 		GameObject bi_instance = Instantiate(boundary_invisible, 
-		                                     new Vector3(camCenterX - camVolumeHalfWidth - thickness/2,
-		            									camCenterY, 0f),
-		                                     new Quaternion()) as GameObject;
+			new Vector3(camCenterX - camVolumeHalfWidth - thickness/2,
+				camCenterY, 0f),
+			new Quaternion()) as GameObject;
 
 		float bi_instance_width = bi_instance.GetComponent<Collider2D>().bounds.size.x;
 		float bi_instance_height = bi_instance.GetComponent<Collider2D>().bounds.size.y;
 		bi_instance.transform.localScale = new Vector3 (thickness / bi_instance_width,
-		                                               2f * camVolumeHalfHeight / bi_instance_height,
-		                                               1f);
+			2f * camVolumeHalfHeight / bi_instance_height,
+			1f);
 		// right
 		bi_instance = Instantiate(boundary_invisible, 
-		                                     new Vector3(camCenterX + camVolumeHalfWidth + thickness/2,
-		            									camCenterY, 0f),
-		                                     new Quaternion()) as GameObject;
+			new Vector3(camCenterX + camVolumeHalfWidth + thickness/2,
+				camCenterY, 0f),
+			new Quaternion()) as GameObject;
 		bi_instance.transform.localScale = new Vector3 (thickness / bi_instance_width,
-		                                                2f * camVolumeHalfHeight / bi_instance_height,
-		                                                1f);
+			2f * camVolumeHalfHeight / bi_instance_height,
+			1f);
 
 		// bottom
 		bi_instance = Instantiate(boundary_invisible, 
-		                                     new Vector3(camCenterX,
-	            										camCenterY - camVolumeHalfHeight - thickness/2, 0f),
-		                                     new Quaternion()) as GameObject;
+			new Vector3(camCenterX,
+				camCenterY - camVolumeHalfHeight - thickness/2, 0f),
+			new Quaternion()) as GameObject;
 		bi_instance.transform.localScale = new Vector3 (2f * camVolumeHalfWidth / bi_instance_width,
-		                                                thickness / bi_instance_height,
-		                                                1f);
+			thickness / bi_instance_height,
+			1f);
 
 		// top
 		bi_instance = Instantiate(boundary_invisible, 
-		                          new Vector3(camCenterX,
-		            						 camCenterY + camVolumeHalfHeight + thickness/2, 0f),
-		                          new Quaternion()) as GameObject;
+			new Vector3(camCenterX,
+				camCenterY + camVolumeHalfHeight + thickness/2, 0f),
+			new Quaternion()) as GameObject;
 		bi_instance.transform.localScale = new Vector3 (2f * camVolumeHalfWidth / bi_instance_width,
-		                                                thickness / bi_instance_height,
-		                                                1f);
+			thickness / bi_instance_height,
+			1f);
+
 
 		// instantiate boundaries and platform along the points
+
 		GameObject b_instance = Instantiate(boundary, new Vector3(), new Quaternion()) as GameObject;
 		float b_instance_width = b_instance.GetComponent<Renderer>().bounds.size.x;
 		float b_instance_height = b_instance.GetComponent<Renderer>().bounds.size.y;
 		GameObject.Destroy (b_instance);
 
 		for (int i = 0; i < numpoints - 1; i++) {
+
 			Vector3 center = new Vector3((points[i].x + points[i+1].x) / 2,
-			                             (points[i].y + points[i+1].y) / 2,
-			                             0f);
+				(points[i].y + points[i+1].y) / 2,
+				0f);
 			float length = Vector2.Distance(points[i], points[i+1]);
 			float angle = Mathf.Atan2(points[i+1].y - points[i].y,
-			                          points[i+1].x - points[i].x)
+				points[i+1].x - points[i].x)
 				*180 / Mathf.PI;
+
 
 			GameObject instance;
 			float instance_width, instance_height;
@@ -198,5 +211,11 @@ public class boundariesGenerator : MonoBehaviour {
 			instance.transform.localScale = new Vector3(length / instance_width, s.y, s.z);
 			instance.transform.Rotate(new Vector3(0f,0f,angle));
 		}
+
+	}
+
+	// Update is called once per frame
+	void Update () {
+
 	}
 }
