@@ -1,10 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class resizeToFitBackground : MonoBehaviour {
+public class resizeToFitScreen : MonoBehaviour {
+
+	void Start() {
+	
+	}
 
 	// Use this for initialization
-	void Start () {
+	void OnLevelWasLoaded (int level) {
 		SpriteRenderer sr = GetComponent<SpriteRenderer>();
 
 		float worldScreenHeight = Camera.main.orthographicSize * 2;
@@ -13,10 +17,5 @@ public class resizeToFitBackground : MonoBehaviour {
 		transform.localScale = new Vector3(
 			worldScreenWidth / sr.sprite.bounds.size.x,
 			worldScreenHeight / sr.sprite.bounds.size.y, 1);
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
 	}
 }
